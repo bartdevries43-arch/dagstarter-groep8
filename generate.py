@@ -141,7 +141,8 @@ def gen_hoofdrekenen(rnd, t):
 # Redactiesommen (verhaaltjessommen)
 # ---------------------------------------------------------------------------
 NAMEN = ["Sara", "Tim", "Noor", "Lars", "Fatima", "Daan", "Sofie", "Youssef",
-         "Emma", "Bram", "Lisa", "Mees", "Julia", "Sem", "Nora", "Finn"]
+         "Emma", "Bram", "Lisa", "Mees", "Julia", "James", "Mohammed", "Chen",
+         "Amara", "Yusuf", "Aisha", "Sem", "Nora", "Finn", "Ravi", "Yara"]
 
 
 def _redactie_makkelijk(rnd):
