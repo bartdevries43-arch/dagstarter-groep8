@@ -57,10 +57,12 @@ def getal(n):
 # Rekenblokken
 # ===========================================================================
 def gen_automatiseren(rnd, t):
-    """Keer- en deelsommen die met de dagen moeilijker worden."""
+    """Keer- en deelsommen die met de dagen moeilijker worden (zonder dubbele)."""
     items = []
-    # ---- keersommen ----
-    for _ in range(8):
+    seen = set()
+    pog = 0
+    while len(items) < 8 and pog < 500:
+        pog += 1
         if t < 0.20:
             a, b = rnd.randint(2, 10), rnd.randint(2, 10)
         elif t < 0.45:
@@ -75,10 +77,14 @@ def gen_automatiseren(rnd, t):
                 a, b = rnd.randint(12, 40), rnd.randint(3, 9)
             else:
                 a, b = rnd.randint(11, 25), rnd.randint(11, 20)
-        items.append({"vraag": f"{a} × {b} =", "antwoord": str(a * b)})
-
-    # ---- deelsommen (uit vermenigvuldiging, evt. met rest) ----
-    for _ in range(6):
+        v = f"{a} × {b} ="
+        if v in seen:
+            continue
+        seen.add(v)
+        items.append({"vraag": v, "antwoord": str(a * b)})
+    pog = 0
+    while len(items) < 14 and pog < 500:
+        pog += 1
         if t < 0.20:
             deler, quot = rnd.randint(2, 10), rnd.randint(2, 10)
             rest = 0
@@ -92,19 +98,22 @@ def gen_automatiseren(rnd, t):
             deler, quot = rnd.randint(4, 12), rnd.randint(8, 25)
             rest = rnd.choice([0, rnd.randint(1, deler - 1)])
         deeltal = deler * quot + rest
-        if rest:
-            antw = f"{quot} rest {rest}"
-        else:
-            antw = str(quot)
-        items.append({"vraag": f"{deeltal} : {deler} =", "antwoord": antw})
-
+        v = f"{deeltal} : {deler} ="
+        if v in seen:
+            continue
+        seen.add(v)
+        antw = f"{quot} rest {rest}" if rest else str(quot)
+        items.append({"vraag": v, "antwoord": antw})
     return {"titel": "Automatiseren", "kolommen": 2, "items": items}
 
 
 def gen_hoofdrekenen(rnd, t):
-    """Optellen en aftrekken, groeiend van 2-cijferig naar grote getallen."""
+    """Optellen en aftrekken, oplopend; zonder dubbele sommen."""
     items = []
-    for _ in range(6):
+    seen = set()
+    pog = 0
+    while len(items) < 6 and pog < 500:
+        pog += 1
         if t < 0.20:
             a, b = rnd.randint(11, 99), rnd.randint(11, 99)
         elif t < 0.45:
@@ -114,13 +123,17 @@ def gen_hoofdrekenen(rnd, t):
         else:
             a, b = rnd.randint(10000, 89999), rnd.randint(2000, 39999)
         if rnd.random() < 0.5:
-            items.append({"vraag": f"{getal(a)} + {getal(b)} =",
-                          "antwoord": getal(a + b)})
+            v = f"{getal(a)} + {getal(b)} ="
+            antw = getal(a + b)
         else:
             if b > a:
                 a, b = b, a
-            items.append({"vraag": f"{getal(a)} − {getal(b)} =",
-                          "antwoord": getal(a - b)})
+            v = f"{getal(a)} − {getal(b)} ="
+            antw = getal(a - b)
+        if v in seen:
+            continue
+        seen.add(v)
+        items.append({"vraag": v, "antwoord": antw})
     return {"titel": "Hoofdrekenen", "kolommen": 2, "items": items}
 
 
@@ -174,10 +187,11 @@ def _redactie_middel(rnd):
                 f"{getal(flessen)} flessen nodig. Hoeveel uur is de machine "
                 f"bezig (afgerond naar boven)?",
                 f"{-(-flessen // per_uur)} uur")
-    liter, mensen = rnd.randint(6, 18), rnd.randint(3, 6)
-    ml = liter * 1000
+    mensen = rnd.randint(3, 6)
+    per_glas = rnd.choice([150, 200, 250, 300])
+    ml = mensen * per_glas
     return (f"{ml} ml limonade wordt eerlijk verdeeld over {mensen} glazen. "
-            f"Hoeveel ml komt er in elk glas?", f"{ml // mensen} ml")
+            f"Hoeveel ml komt er in elk glas?", f"{per_glas} ml")
 
 
 def _redactie_moeilijk(rnd):
@@ -198,15 +212,17 @@ def _redactie_moeilijk(rnd):
                 f"kaartje kost {euro(prijs)}. Hoeveel kinderen gaan er mee?",
                 f"{kaartjes} kinderen")
     if keuze == 2:
-        km = rnd.randint(120, 360)
         uur = rnd.choice([2, 3, 4])
+        per_uur = rnd.randint(60, 120)
+        km = uur * per_uur
         return (f"Een trein rijdt {km} km in {uur} uur. Hoeveel km rijdt de "
-                f"trein gemiddeld per uur?", f"{km // uur} km per uur")
-    a, b, c = (rnd.randint(30, 90), rnd.randint(30, 90), rnd.randint(30, 90))
-    gem = (a + b + c) // 3
-    return (f"{naam} haalt de cijfers {a/10:.1f}, {b/10:.1f} en {c/10:.1f} "
-            f"(op een schaal van 10). Wat is het gemiddelde?",
-            f"{(a + b + c) / 30:.1f}".replace(".", ","))
+                f"trein gemiddeld per uur?", f"{per_uur} km per uur")
+    while True:
+        a, b, c = rnd.randint(4, 10), rnd.randint(4, 10), rnd.randint(4, 10)
+        if (a + b + c) % 3 == 0:
+            break
+    return (f"{naam} haalt de rapportcijfers {a}, {b} en {c}. "
+            f"Wat is het gemiddelde?", str((a + b + c) // 3))
 
 
 def gen_redactie(rnd, t):
@@ -278,12 +294,15 @@ def _wissel_meten(rnd, t):
 
 def _wissel_meetkunde(rnd, t):
     items = []
-    for _ in range(3):
+    seen = set()
+    while len(items) < 4:
         l, b = rnd.randint(4, 25), rnd.randint(3, 18)
-        items.append({"vraag": f"Rechthoek van {l} cm bij {b} cm. Omtrek = "
-                               f"______ cm",
+        if (l, b) in seen:
+            continue
+        seen.add((l, b))
+        items.append({"vraag": f"Rechthoek {l} cm bij {b} cm → omtrek = ______ cm",
                       "antwoord": f"{2 * (l + b)} cm"})
-        items.append({"vraag": f"→ en de oppervlakte = ______ cm²",
+        items.append({"vraag": f"Rechthoek {l} cm bij {b} cm → oppervlakte = ______ cm²",
                       "antwoord": f"{l * b} cm²"})
     return "Meetkunde: omtrek en oppervlakte", items[:4]
 
@@ -306,7 +325,13 @@ def gen_wissel(rnd, t, dagnummer):
     pool = vroeg if t < 0.4 else laat
     maker = pool[dagnummer % len(pool)]
     titel, items = maker(rnd, t)
-    return {"titel": titel, "kolommen": 1, "items": items}
+    gezien = set()
+    uniek = []
+    for it in items:
+        if it["vraag"] not in gezien:
+            gezien.add(it["vraag"])
+            uniek.append(it)
+    return {"titel": titel, "kolommen": 1, "items": uniek}
 
 
 # ===========================================================================
