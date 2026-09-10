@@ -449,6 +449,8 @@ def gen_spelling(rnd, t, dagnummer):
         rnd.shuffle(keuze)
         for woord, dg in keuze[:8]:
             items.append({"vraag": _gap_woord(woord, dg), "antwoord": dg})
+    gezien = set()
+    items = [it for it in items if not (it["vraag"] in gezien or gezien.add(it["vraag"]))]
     return {"titel": titel, "kolommen": 2, "items": items}
 
 
